@@ -18,7 +18,7 @@ struct container_name {                                                         
                                                                                                             \
     container_name##_element* data;                                                                         \
                                                                                                             \
-    void (*dtor)(container_name##_element*);                                                                \
+    void (*dtor)(container_name##_element);                                                                 \
 };                                                                                                          \
                                                                                                             \
 struct container_name make_##container_name(size_t);                                                        \
@@ -54,6 +54,8 @@ void container_name##_remove_range(struct container_name*,                      
     size_t,                                                                                                 \
     size_t);                                                                                                \
                                                                                                             \
+void container_name##_clear(struct container_name*, bool);                                                  \
+                                                                                                            \
 bool is_##container_name##_empty(struct container_name const*);                                          
 
 #define DEF_VECTOR(container_name, ty)                                                                      \
@@ -83,7 +85,7 @@ void free_##container_name(struct container_name* vector) {                     
                                                                                                             \
     if (vector->dtor) {                                                                                     \
         for (size_t i = 0; i < vector->count; i++) {                                                        \
-            vector->dtor(&vector->data[i]);                                                                 \
+            vector->dtor(vector->data[i]);                                                                  \
         }                                                                                                   \
     }                                                                                                       \
                                                                                                             \
@@ -169,7 +171,7 @@ void container_name##_pop(struct container_name* vector) {                      
     }                                                                                                       \
                                                                                                             \
     if (vector->dtor) {                                                                                     \
-        vector->dtor(&vector->data[vector->count - 1]);                                                     \
+        vector->dtor(vector->data[vector->count - 1]);                                                      \
     }                                                                                                       \
                                                                                                             \
     vector->count--;                                                                                        \
@@ -179,14 +181,14 @@ void container_name##_insert(struct container_name* vector,                     
     container_name##_element element,                                                                       \
     size_t insert_position) {                                                                               \
                                                                                                             \
-    container_name##_check_valid(vector);                                                                      \
+    container_name##_check_valid(vector);                                                                   \
                                                                                                             \
     if (vector->count == vector->capacity) {                                                                \
-        container_name##_reserve(vector, vector->capacity * 2 + 1);                                            \
+        container_name##_reserve(vector, vector->capacity * 2 + 1);                                         \
     }                                                                                                       \
                                                                                                             \
     if (insert_position > vector->count) {                                                                  \
-        container_name##_insert(vector, element, 0);                                                             \
+        container_name##_insert(vector, element, 0);                                                        \
         return;                                                                                             \
     }                                                                                                       \
                                                                                                             \
@@ -229,14 +231,14 @@ void container_name##_insert_range(struct container_name* vector,               
 }                                                                                                           \
                                                                                                             \
 void container_name##_remove(struct container_name* vector, size_t remove_pos) {                            \
-    container_name##_check_valid(vector);                                                                      \
+    container_name##_check_valid(vector);                                                                   \
                                                                                                             \
     if (vector->count == 0 || remove_pos >= vector->count) {                                                \
         return;                                                                                             \
     }                                                                                                       \
                                                                                                             \
     if (vector->dtor) {                                                                                     \
-        vector->dtor(&vector->data[remove_pos]);                                                            \
+        vector->dtor(vector->data[remove_pos]);                                                             \
     }                                                                                                       \
                                                                                                             \
     for (size_t i = remove_pos; i < vector->count - 1; i++) {                                               \
@@ -247,7 +249,7 @@ void container_name##_remove(struct container_name* vector, size_t remove_pos) {
 void container_name##_remove_range(struct container_name* vector,                                           \
     size_t removeStart,                                                                                     \
     size_t count) {                                                                                         \
-    container_name##_check_valid(vector);                                                                      \
+    container_name##_check_valid(vector);                                                                   \
                                                                                                             \
     if (vector->capacity < removeStart + count || vector->count < count) {                                  \
         return;                                                                                             \
@@ -255,7 +257,7 @@ void container_name##_remove_range(struct container_name* vector,               
                                                                                                             \
     if (vector->dtor) {                                                                                     \
         for (size_t i = removeStart; i < removeStart + count; i++) {                                        \
-            vector->dtor(&vector->data[i]);                                                                 \
+            vector->dtor(vector->data[i]);                                                                  \
         }                                                                                                   \
     }                                                                                                       \
                                                                                                             \
@@ -264,6 +266,21 @@ void container_name##_remove_range(struct container_name* vector,               
     }                                                                                                       \
                                                                                                             \
     vector->count -= count;                                                                                 \
+}                                                                                                           \
+                                                                                                            \
+void container_name##_clear(struct container_name* vector, bool free_all) {                                 \
+    if (!vector || vector->count == 0) {                                                                    \
+        return;                                                                                             \
+    }                                                                                                       \
+                                                                                                            \
+    if (vector->dtor && free_all) {                                                                         \
+        for (size_t i = 0; i < vector->count; i++) {                                                        \
+            vector->dtor(vector->data[i]);                                                                  \
+        }                                                                                                   \
+    }                                                                                                       \
+                                                                                                            \
+                                                                                                            \
+    vector->count = 0;                                                                                      \
 }                                                                                                           \
                                                                                                             \
 bool is_##container_name##_empty(struct container_name const* vector) {                                     \
