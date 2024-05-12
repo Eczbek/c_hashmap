@@ -4,11 +4,11 @@
 #include "default_hash.h"
 #include "default_cmp.h"
 
-DEC_HASHMAP(hash_map, int_int_pair, char*, unsigned long long)
-DEF_HASHMAP(hash_map, int_int_pair, char*, unsigned long long)
+DEC_HASHMAP(hash_map, str_ull_pair, char*, unsigned long long)
+DEF_HASHMAP(hash_map, str_ull_pair, char*, unsigned long long)
 
 typedef struct hash_map hash_map_t;
-typedef struct int_int_pair int_int_pair_t;
+typedef struct str_ull_pair str_ull_pair_t;
 
 void show_bucket_distribution(hash_map_t* map) {
     for (size_t i = 0; i < map->buckets.count; i++) {
@@ -20,7 +20,7 @@ void show_bucket_distribution(hash_map_t* map) {
         );
 
         for (size_t j = 0; j < bucket->count; j++) {
-            int_int_pair_t* pair = hash_map_bucket_get_ptr(
+            str_ull_pair_t* pair = hash_map_bucket_get_ptr(
                 bucket, 
                 j
             );
@@ -44,7 +44,7 @@ char* random_str(size_t len) {
     return str;
 }
 
-void free_str(int_int_pair_t pair) {
+void free_str(str_ull_pair_t pair) {
     free(pair.key);
 }
 
@@ -59,9 +59,9 @@ int main(void) {
     );
 
     for (unsigned long long i = 0; i < 256; i++) {
-        insert_int_int_pair(
+        insert_str_ull_pair(
             &map,
-            (int_int_pair_t) { random_str( (i % 10) + 1), i*10/3 }
+            (str_ull_pair_t) { random_str( (i % 10) + 1), i*10/3 }
         );
     }
 
